@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat Completion Form</title>
+
+    <!-- jQuery 3.7.1 -->
+    <script
+      src="https://code.jquery.com/jquery-3.7.1.min.js"
+      integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body>
+    <h1>Chat Completion Form</h1>
+
+    <form id="prompt-form">
+      <label for="prompt">Enter your prompt:</label><br />
+      <input type="text" id="prompt" name="prompt" /><br /><br />
+      <button type="submit">Submit</button>
+    </form>
+
+    <ul id="messages-list" style="white-space: pre-wrap"></ul>
+
+    <script>
+      // declaring the promptForm and messages-list input element
+      const promptForm = $('#prompt-form');
+      const messagesList = $('#messages-list');
+
+      // function to create the message html element
+      const createMessageElement = (msg) => {
+        const messageElement =
+          msg.role === 'user'
+            ? `<li><b>${msg.content}</b></li>`
+            : `<li><p>${msg.content}</p></li>`;
+
+        return messageElement;
+      };
+
+      // function to dynamically render the messages
+      const renderMessages = (messages) => {
+        messagesList.empty();
+        for (const msg of messages.splice(1)) {
+          const msgElement = createMessageElement(msg);
+          messagesList.append(msgElement);
+        }
+      };
+
+      // create the handle submit function
+      const handleSubmitPromptForm = async function (event) {
+        // prevent form to refresh the page by default
+        event.preventDefault();
+
+        // access to the prompt input
+        const { prompt } = event.target.elements;
+
+        // grab current messages based on cookie
+        const currentMessages = localStorage.getItem('messages');
+
+        // define the input messages list based on previous cookie messages
+        const messages = !currentMessages
+          ? [
+              {
+                role: 'system',
+                content:
+                  'You are a kids friendly assistant, your name is Larry, you must respond with excitement and feel free to use kind emojis from time to time',
+              },
+              { role: 'user', content: prompt.value },
+            ]
+          : [
+              ...JSON.parse(currentMessages),
+              { role: 'user', content: prompt.value },
+            ];
+
+        // call our backend endpoint with given messages
+        try {
+          const response = await $.ajax({
+            url: '/api/messages',
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            data: JSON.stringify({ messages }),
+          });
+
+          // declare new messages list with received response
+          const newMessages = [
+            ...messages,
+            { role: 'assistant', content: response.content },
+          ];
+
+          // update messages cookie value
+          localStorage.setItem('messages', JSON.stringify(newMessages));
+
+          // render new messages list
+          renderMessages(newMessages);
+
+          // clear input value
+          $(prompt).val('');
+        } catch (error) {
+          console.error('Error:', error);
+          messagesList.innerText = 'An error occurred while completing chat';
+        }
+      };
+
+      // grab current messages based on cookie
+      const currentMessages = localStorage.getItem('messages');
+
+      // render current messages list
+      renderMessages(currentMessages ? JSON.parse(currentMessages) : []);
+
+      // add form event listener
+      promptForm.submit(handleSubmitPromptForm);
+    </script>
+  </body>
+</html>

@@ -21,6 +21,11 @@ app.get('/', (req, res) => {
   res.render('index');
 });
 
+// homepage jquery route
+app.get('/jquery', (req, res) => {
+  res.render('index-jquery');
+});
+
 // API prompt endpoint
 app.post('/api/messages', async (req, res) => {
   try {
