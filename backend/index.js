@@ -14,7 +14,7 @@ const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 // Middleware
 app.use(
   require('cors')({
-    origin: 'http://localhost:3000',
+    origin: '*',
   })
 );
 app.set('view engine', 'ejs');
