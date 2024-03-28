@@ -5,14 +5,12 @@ function App() {
   // grab current messages based on cookie
   const currentMessages = localStorage.getItem('messages');
 
-  console.log(currentMessages);
-
+  // state variable
   const [messages, setMessages] = useState(
     !currentMessages ? [] : JSON.parse(currentMessages)
   );
 
-  console.log(messages);
-
+  // submit handler
   const handleSubmit = (e) => {
     e.preventDefault();
 
@@ -37,7 +35,7 @@ function App() {
           { role: 'user', content: prompt.value },
         ];
 
-    fetch('http://localhost:8080/api/messages', {
+    fetch('https://ai-techiesinplaya.onrender.com/api/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -61,6 +59,7 @@ function App() {
       });
   };
 
+  // rendering jsx statement
   return (
     <div>
       <h1>Chat Completion Form</h1>
@@ -75,6 +74,7 @@ function App() {
       </form>
 
       <ul id='messages-list' style={{ whiteSpace: 'pre-wrap' }}>
+        {/* Dynamically rendering the messages list */}
         {messages.slice(1).map((msg) =>
           msg.role === 'user' ? (
             <li key={msg.content}>
