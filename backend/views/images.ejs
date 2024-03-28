@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Images Prompt</title>
+  </head>
+  <body>
+    <h1>Images Prompt</h1>
+
+    <form id="prompt-form">
+      <label for="prompt">Enter your prompt:</label><br />
+      <input type="text" id="prompt" name="prompt" /><br /><br />
+      <button type="submit">Submit</button>
+    </form>
+
+    <ul id="images-list" style="white-space: pre-wrap"></ul>
+
+    <script>
+      // declaring the promptForm and images-list input element
+      const promptForm = document.getElementById('prompt-form');
+      const imagesList = document.getElementById('images-list');
+
+      // function to dynamically render the images
+      const renderImages = (images) => {
+        imagesList.innerHTML = '';
+        for (const imgUrl of images) {
+          const imgElement = `<li><img alt="ai img" src="${imgUrl}" width="500px" /></li>`;
+          imagesList.innerHTML += imgElement;
+        }
+      };
+
+      // create the handle submit function
+      const handleSubmitPromptForm = async function (event) {
+        // prevent form to refresh the page by default
+        event.preventDefault();
+
+        // access to the prompt input
+        const { prompt } = event.target.elements;
+
+        // call our backend endpoint with given images
+        try {
+          const response = await fetch('/api/images', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ prompt: prompt.value }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          // parse the response data as a json object
+          const data = await response.json();
+
+          const currentImages = localStorage.getItem('images');
+
+          // declare new images list with received data
+          const newImages = !currentImages
+            ? [data.image.url]
+            : [...JSON.parse(currentImages), data.image.url];
+
+          // update images cookie value
+          localStorage.setItem('images', JSON.stringify(newImages));
+
+          // render new images list
+          renderImages(newImages);
+
+          // clear input value
+          prompt.value = '';
+        } catch (error) {
+          console.error('Error:', error);
+          imagesList.innerText = 'An error occurred while completing chat';
+        }
+      };
+
+      // grab current images based on cookie
+      const currentImages = localStorage.getItem('images');
+      console.log(currentImages);
+
+      // render current images list
+      renderImages(!currentImages ? [] : JSON.parse(currentImages));
+
+      // add form event listener
+      promptForm.addEventListener('submit', handleSubmitPromptForm);
+    </script>
+  </body>
+</html>

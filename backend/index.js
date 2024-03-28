@@ -12,6 +12,11 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
 // Middleware
+app.use(
+  require('cors')({
+    origin: 'http://localhost:3000',
+  })
+);
 app.set('view engine', 'ejs');
 app.use(express.json());
 app.use(require('morgan')('dev'));
@@ -19,6 +24,11 @@ app.use(require('morgan')('dev'));
 // homepage route
 app.get('/', (req, res) => {
   res.render('index');
+});
+
+// images route
+app.get('/images', (req, res) => {
+  res.render('images');
 });
 
 // homepage jquery route
@@ -43,6 +53,32 @@ app.post('/api/messages', async (req, res) => {
 
     // Send the completed chat response
     res.json({ content: completion.choices[0].message.content });
+  } catch (error) {
+    console.error('Error completing chat:', error);
+    res.status(500).json({ error: 'An error occurred while completing chat' });
+  }
+});
+
+// API images endpoint
+app.post('/api/images', async (req, res) => {
+  try {
+    // declare and validate prompt input
+    const { prompt } = req.body;
+    if (!prompt) {
+      return res.status(400).send('Please provide a prompt input');
+    }
+
+    // Call OpenAI API to generate image
+    const response = await openai.images.generate({
+      model: 'dall-e-3',
+      prompt,
+      n: 1,
+      size: '1024x1024',
+    });
+    const image = response.data[0];
+
+    // Send the completed chat response
+    res.json({ image });
   } catch (error) {
     console.error('Error completing chat:', error);
     res.status(500).json({ error: 'An error occurred while completing chat' });
